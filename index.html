@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo Pages</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Murecho:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell" data-theme="sepia">
+    <main class="content">
+      <section id="page-panel" class="panel" data-corner="soft">
+        <div id="page-tabs" class="page-tabs" aria-label="ページタブ"></div>
+        <div class="panel-controls">
+          <div class="panel-controls-left">
+            <button id="add-page" class="ghost-button" type="button">+ ページ追加</button>
+            <div class="page-jump" aria-label="ページ移動">
+              <button id="prev-page" class="icon-button" type="button" aria-label="前のページ">‹</button>
+              <span id="page-indicator" class="page-indicator"></span>
+              <button id="next-page" class="icon-button" type="button" aria-label="次のページ">›</button>
+            </div>
+            <button id="delete-page" class="icon-button" type="button" aria-label="現在のページを削除">×</button>
+            <select id="theme-select" class="theme-select topbar-theme-select" aria-label="インク色">
+              <option value="sepia">赤茶</option>
+              <option value="navy">紺</option>
+              <option value="green">深緑</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="page-meta">
+          <input
+            id="page-title-input"
+            class="page-title-input"
+            type="text"
+            maxlength="40"
+            placeholder="ページ名を入力"
+            aria-label="ページ名"
+          >
+          <div class="page-settings">
+            <input
+              id="page-tab-input"
+              class="page-tab-input"
+              type="text"
+              maxlength="12"
+              placeholder="付箋名"
+              aria-label="付箋名"
+            >
+          </div>
+        </div>
+
+        <form id="todo-form" class="todo-form">
+          <input
+            id="todo-input"
+            class="todo-input"
+            type="text"
+            maxlength="120"
+            placeholder="+ 予定を追加する"
+            aria-label="予定を追加"
+          >
+          <button class="solid-button add-submit" type="submit">追加</button>
+        </form>
+
+        <div class="toolbar">
+          <div class="toolbar-hint-group">
+            <span id="swipe-hint" class="swipe-hint">左右にスライドでページ移動</span>
+          </div>
+          <div class="toolbar-actions">
+            <button id="check-all" class="solid-button" type="button">全部チェック</button>
+            <button id="delete-completed" class="danger-button" type="button">一括削除</button>
+            <button id="sort-toggle" class="ghost-button toolbar-sort" type="button">並び替え</button>
+          </div>
+        </div>
+
+        <section id="swipe-surface" class="todo-surface" aria-label="TODO ページ">
+          <div class="paper-stack" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <ul id="todo-list" class="todo-list"></ul>
+          <div id="empty-state" class="empty-state hidden">
+            予定はまだありません
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <template id="todo-item-template">
+    <li class="todo-item">
+      <div class="clip-mark" aria-hidden="true"></div>
+      <div class="todo-row">
+        <div class="todo-main">
+          <label class="check-control">
+            <input class="todo-check" type="checkbox" aria-label="完了">
+            <span class="check-shape" aria-hidden="true"></span>
+          </label>
+          <button class="todo-text-button" type="button">
+            <span class="todo-text"></span>
+            <span class="item-stamp" aria-hidden="true"></span>
+            <span class="stamp-mark" aria-hidden="true">済</span>
+          </button>
+        </div>
+      </div>
+      <div class="memo-panel hidden">
+        <div class="memo-back-title">裏面メモ</div>
+        <textarea class="memo-input" rows="3" maxlength="300" placeholder="紙の裏にメモを書く"></textarea>
+        <div class="memo-meta">
+          <label class="meta-field">
+            <span>期限</span>
+            <input class="due-input" type="date">
+          </label>
+          <label class="meta-field">
+            <span>スタンプ</span>
+            <select class="stamp-select">
+              <option value="">なし</option>
+              <option value="urgent">急ぎ</option>
+              <option value="today">今日</option>
+              <option value="buy">買う</option>
+            </select>
+          </label>
+          <label class="pin-field">
+            <input class="pin-input" type="checkbox">
+            <span>ピン留め</span>
+          </label>
+        </div>
+      </div>
+      <div class="todo-shadow" aria-hidden="true"></div>
+    </li>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
