@@ -116,7 +116,7 @@ textarea {
 .solid-button,
 .danger-button {
   border-radius: 999px;
-  padding: 0.78rem 1rem;
+  padding: 0.6rem 1rem;
   color: #fffaf3;
   font-size: 0.98rem;
   font-weight: 700;
@@ -260,7 +260,6 @@ textarea {
   z-index: 3;
 }
 
-.page-title-input,
 .page-tab-input,
 .theme-select,
 .todo-input,
@@ -273,10 +272,10 @@ textarea {
   color: var(--ink);
 }
 
-.page-title-input,
 .todo-input {
   width: 100%;
-  padding: 0.95rem 1rem;
+  height: 2.7rem;
+  padding: 0.54rem 0.82rem;
 }
 
 .page-settings {
@@ -285,7 +284,8 @@ textarea {
 
 .page-tab-input,
 .theme-select {
-  padding: 0.75rem 0.9rem;
+  height: 2.35rem;
+  padding: 0.48rem 0.76rem;
 }
 
 .topbar-theme-select {
@@ -307,7 +307,7 @@ textarea {
   background: var(--ink);
   color: #fffaf3;
   border-radius: 999px;
-  padding: 0.78rem 1rem;
+  padding: 0.6rem 1rem;
   font-size: 0.98rem;
   font-weight: 700;
 }
@@ -421,7 +421,8 @@ textarea {
 
 .todo-row {
   border-bottom: 3px dashed var(--line);
-  padding: 0.9rem 0.45rem 0.85rem;
+  min-height: 3rem;
+  padding: 0.58rem 0.38rem 0.54rem;
 }
 
 .todo-main {
@@ -433,8 +434,8 @@ textarea {
 
 .check-control {
   position: relative;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .todo-check {
@@ -873,13 +874,22 @@ textarea {
   }
 
   .toolbar-sort {
-    padding: 0.68rem 0.88rem;
+    padding: 0.54rem 0.88rem;
     font-size: 0.88rem;
   }
 
-  .todo-input,
-  .page-title-input {
-    padding: 0.88rem 0.9rem;
+  .todo-input {
+    height: 2.45rem;
+    padding: 0.48rem 0.72rem;
+  }
+
+  .page-tab-input,
+  .theme-select {
+    height: 2.15rem;
+  }
+
+  .todo-row {
+    min-height: 2.7rem;
   }
 
   .add-submit {

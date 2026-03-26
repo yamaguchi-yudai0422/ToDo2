@@ -46,7 +46,6 @@ let deletingItemIds = new Set();
 
 const appShell = document.querySelector(".app-shell");
 const pagePanel = document.getElementById("page-panel");
-const pageTitleInput = document.getElementById("page-title-input");
 const pageTabInput = document.getElementById("page-tab-input");
 const themeSelect = document.getElementById("theme-select");
 const todoForm = document.getElementById("todo-form");
@@ -74,7 +73,6 @@ function initialize() {
 
 function bindEvents() {
   todoForm.addEventListener("submit", handleAddTodo);
-  pageTitleInput.addEventListener("input", handleRenamePage);
   pageTabInput.addEventListener("input", handleTabRename);
   themeSelect.addEventListener("change", handleThemeChange);
   addPageButton.addEventListener("click", handleAddPage);
@@ -112,13 +110,6 @@ function handleAddTodo(event) {
   todoInput.value = "";
   persist();
   render();
-}
-
-function handleRenamePage(event) {
-  const currentPage = getCurrentPage();
-  currentPage.title = event.target.value.trim() || "無題ページ";
-  persist();
-  renderTabs();
 }
 
 function handleTabRename(event) {
@@ -159,8 +150,8 @@ function handleAddPage() {
     pagePanel.classList.remove("stack-pop");
   }, 340);
   render();
-  pageTitleInput.focus();
-  pageTitleInput.select();
+  pageTabInput.focus();
+  pageTabInput.select();
 }
 
 function toggleSortMode() {
@@ -266,7 +257,6 @@ function renderHeader() {
   const currentPage = getCurrentPage();
   appShell.dataset.theme = currentPage.theme;
   pagePanel.dataset.corner = currentPage.corner;
-  pageTitleInput.value = currentPage.title;
   pageTabInput.value = currentPage.tabLabel;
   themeSelect.value = currentPage.theme;
   updatePageIndicator();
