@@ -315,6 +315,7 @@ function renderTodos(swipeDirection) {
     const textButton = fragment.querySelector(".todo-text-button");
     const stamp = fragment.querySelector(".item-stamp");
     const memoPanel = fragment.querySelector(".memo-panel");
+    const titleInput = fragment.querySelector(".title-input");
     const memoInput = fragment.querySelector(".memo-input");
     const dueInput = fragment.querySelector(".due-input");
     const stampSelect = fragment.querySelector(".stamp-select");
@@ -339,6 +340,7 @@ function renderTodos(swipeDirection) {
     }
 
     memoPanel.classList.toggle("hidden", expandedMemoId !== item.id);
+    titleInput.value = item.text;
     memoInput.value = item.memo;
     dueInput.value = item.dueDate;
     stampSelect.value = item.stamp;
@@ -356,6 +358,10 @@ function renderTodos(swipeDirection) {
         return;
       }
       toggleMemoEditor(item.id);
+    });
+    titleInput.addEventListener("input", (event) => {
+      text.textContent = event.target.value || "無題";
+      updateTodoField(item.id, "text", event.target.value, false);
     });
     memoInput.addEventListener("input", (event) => updateTodoField(item.id, "memo", event.target.value, false));
     dueInput.addEventListener("change", (event) => updateTodoField(item.id, "dueDate", event.target.value, true));
@@ -539,7 +545,7 @@ function handleItemPointerDown(event) {
     return;
   }
 
-  if (event.target.closest(".check-control") || event.target.closest(".memo-input") || event.target.closest(".meta-field") || event.target.closest(".pin-field")) {
+  if (event.target.closest(".check-control") || event.target.closest(".title-input") || event.target.closest(".memo-input") || event.target.closest(".meta-field") || event.target.closest(".pin-field")) {
     return;
   }
 
