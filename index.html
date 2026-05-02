@@ -80,6 +80,55 @@
         </section>
       </section>
     </main>
+
+    <button id="ai-toggle" class="ai-toggle" type="button" aria-label="AI分析を開く">AI分析</button>
+
+    <aside id="ai-panel" class="ai-panel hidden" aria-label="AI分析パネル">
+      <div class="ai-panel-header">
+        <div>
+          <h2>AI分析</h2>
+          <p>Noesia 人格が今のページをどう見るか試す</p>
+        </div>
+        <div class="ai-panel-header-actions">
+          <button id="ai-settings-toggle" class="ghost-button ai-settings-toggle" type="button">API設定</button>
+          <button id="ai-close" class="icon-button ai-close" type="button" aria-label="AI分析を閉じる">×</button>
+        </div>
+      </div>
+
+      <div class="ai-settings-summary">
+        <span class="ai-settings-label">使用中API</span>
+        <strong id="ai-active-profile-name">未設定</strong>
+      </div>
+
+      <div class="ai-quick-actions">
+        <button id="ai-action-impression" class="solid-button ai-action" type="button">ひとこと感想</button>
+        <button id="ai-action-concern" class="ghost-button ai-action alt" type="button">気になる点</button>
+        <button id="ai-action-delay" class="ghost-button ai-action alt" type="button">後回し警報</button>
+        <button id="ai-action-owner" class="ghost-button ai-action alt" type="button">持ち主にひとこと</button>
+        <button id="ai-action-missing" class="ghost-button ai-action alt" type="button">抜けチェック</button>
+      </div>
+
+      <div id="ai-messages" class="ai-messages"></div>
+    </aside>
+
+    <aside id="ai-settings-panel" class="ai-settings-panel hidden" aria-label="API設定">
+      <div class="ai-settings-panel-header">
+        <div>
+          <h3>API設定</h3>
+          <p>Noesia の `pk_` APIキーを名前付きで保存</p>
+        </div>
+        <button id="ai-settings-close" class="icon-button ai-close" type="button" aria-label="API設定を閉じる">×</button>
+      </div>
+
+      <form id="ai-profile-form" class="ai-profile-form">
+        <input id="ai-profile-name" class="ai-input" type="text" maxlength="30" placeholder="表示名 例: 仕事用">
+        <input id="ai-profile-key" class="ai-input" type="password" placeholder="Noesia pk_ APIキー">
+        <button class="solid-button" type="submit">追加</button>
+      </form>
+
+      <div id="ai-profile-list" class="ai-profile-list"></div>
+      <p class="ai-settings-note">接続先は `https://noesia.onrender.com` です。このTODOアプリでは `pk_` キーを使います。</p>
+    </aside>
   </div>
 
   <template id="todo-item-template">

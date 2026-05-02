@@ -1,10 +1,19 @@
 const STORAGE_KEY = "todo-pages-app-v2";
+const AI_STORAGE_KEY = "todo-pages-ai-v1";
+const DEFAULT_NOESIA_BASE_URL = "https://noesia.onrender.com";
 const THEMES = ["sepia", "navy", "green"];
 const CORNERS = ["soft", "wide", "tiny"];
 const STAMP_LABELS = {
   urgent: "急ぎ",
   today: "今日",
   buy: "買う",
+};
+const AI_ACTION_PROMPTS = {
+  impression: "今開いているTODOページ全体を見て、あなたらしい言い方で短く感想をください。褒めるだけではなく、印象に残る点があれば一言で触れてください。",
+  concern: "今開いているTODOページを見て、あなたが最初に気になる点を1つか2つだけ挙げてください。人格らしい目線や言い方をはっきり出してください。",
+  delay: "今開いているTODOページの中で、後回しになりそうなことをあなたの視点で指摘してください。理由も短く添えてください。",
+  owner: "今開いているTODOページの持ち主に向けて、あなたらしい言葉でひとこと話しかけてください。励ましでもツッコミでも構いません。",
+  missing: "今開いているTODOページを見て、抜けていそうな予定や見落としをあなたの視点で短く指摘してください。"
 };
 
 const defaultState = {
@@ -43,6 +52,7 @@ let pressStartPoint = null;
 let expandedMemoId = null;
 let stampedItemId = null;
 let deletingItemIds = new Set();
+let aiState = loadAiState();
 
 const appShell = document.querySelector(".app-shell");
 const pagePanel = document.getElementById("page-panel");
@@ -63,6 +73,23 @@ const swipeSurface = document.getElementById("swipe-surface");
 const prevPageButton = document.getElementById("prev-page");
 const nextPageButton = document.getElementById("next-page");
 const todoItemTemplate = document.getElementById("todo-item-template");
+const aiToggle = document.getElementById("ai-toggle");
+const aiPanel = document.getElementById("ai-panel");
+const aiClose = document.getElementById("ai-close");
+const aiSettingsToggle = document.getElementById("ai-settings-toggle");
+const aiSettingsPanel = document.getElementById("ai-settings-panel");
+const aiSettingsClose = document.getElementById("ai-settings-close");
+const aiActiveProfileName = document.getElementById("ai-active-profile-name");
+const aiProfileForm = document.getElementById("ai-profile-form");
+const aiProfileNameInput = document.getElementById("ai-profile-name");
+const aiProfileKeyInput = document.getElementById("ai-profile-key");
+const aiProfileList = document.getElementById("ai-profile-list");
+const aiActionImpressionButton = document.getElementById("ai-action-impression");
+const aiActionConcernButton = document.getElementById("ai-action-concern");
+const aiActionDelayButton = document.getElementById("ai-action-delay");
+const aiActionOwnerButton = document.getElementById("ai-action-owner");
+const aiActionMissingButton = document.getElementById("ai-action-missing");
+const aiMessages = document.getElementById("ai-messages");
 
 initialize();
 
@@ -82,6 +109,16 @@ function bindEvents() {
   checkAllButton.addEventListener("click", toggleAllItemsCompleted);
   prevPageButton.addEventListener("click", () => movePageView(-1));
   nextPageButton.addEventListener("click", () => movePageView(1));
+  aiToggle.addEventListener("click", openAiPanel);
+  aiClose.addEventListener("click", closeAiPanel);
+  aiSettingsToggle.addEventListener("click", openAiSettingsPanel);
+  aiSettingsClose.addEventListener("click", closeAiSettingsPanel);
+  aiProfileForm.addEventListener("submit", handleAiProfileSubmit);
+  aiActionImpressionButton.addEventListener("click", () => runAiAction("ひとこと感想", AI_ACTION_PROMPTS.impression));
+  aiActionConcernButton.addEventListener("click", () => runAiAction("気になる点", AI_ACTION_PROMPTS.concern));
+  aiActionDelayButton.addEventListener("click", () => runAiAction("後回し警報", AI_ACTION_PROMPTS.delay));
+  aiActionOwnerButton.addEventListener("click", () => runAiAction("持ち主にひとこと", AI_ACTION_PROMPTS.owner));
+  aiActionMissingButton.addEventListener("click", () => runAiAction("抜けチェック", AI_ACTION_PROMPTS.missing));
   swipeSurface.addEventListener("touchstart", handleTouchStart, { passive: true });
   swipeSurface.addEventListener("touchmove", handleTouchMove, { passive: true });
   swipeSurface.addEventListener("touchend", handleTouchEnd, { passive: true });
@@ -251,6 +288,7 @@ function render(swipeDirection) {
   renderHeader();
   renderTabs();
   renderTodos(swipeDirection);
+  renderAiPanel();
 }
 
 function renderHeader() {
@@ -300,6 +338,22 @@ function renderTabs() {
 function updatePageIndicator() {
   const currentIndex = state.pages.findIndex((page) => page.id === state.currentPageId);
   pageIndicator.textContent = `${currentIndex + 1} / ${state.pages.length}`;
+}
+
+function renderAiPanel() {
+  aiPanel.classList.toggle("hidden", !aiState.open);
+  aiSettingsPanel.classList.toggle("hidden", !aiState.settingsOpen);
+  aiActiveProfileName.textContent = getActiveAiProfile()?.name ?? "未設定";
+  aiMessages.innerHTML = "";
+  renderAiProfileList();
+
+  if (!aiState.messages.length) {
+    appendAiMessageElement("system", "まず API設定 で名前と `pk_` APIキーを追加してください。そのあと上の固定ボタンを押すと、今見ているページを Noesia が人格らしく見てコメントします。");
+    return;
+  }
+
+  aiState.messages.forEach((message) => appendAiMessageElement(message.role, message.content));
+  aiMessages.scrollTop = aiMessages.scrollHeight;
 }
 
 function renderTodos(swipeDirection) {
@@ -481,6 +535,14 @@ function persist() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function persistAiState() {
+  localStorage.setItem(AI_STORAGE_KEY, JSON.stringify({
+    activeProfileId: aiState.activeProfileId,
+    profiles: aiState.profiles,
+    messages: aiState.messages,
+  }));
+}
+
 function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -517,6 +579,42 @@ function loadState() {
     };
   } catch {
     return cloneDefaultState();
+  }
+}
+
+function loadAiState() {
+  try {
+    const saved = localStorage.getItem(AI_STORAGE_KEY);
+    if (!saved) {
+      return {
+        open: false,
+        settingsOpen: false,
+        activeProfileId: null,
+        profiles: [],
+        messages: [],
+      };
+    }
+
+    const parsed = JSON.parse(saved);
+    return {
+      open: false,
+      settingsOpen: false,
+      activeProfileId: typeof parsed.activeProfileId === "string" ? parsed.activeProfileId : null,
+      profiles: Array.isArray(parsed.profiles)
+        ? parsed.profiles
+            .filter((profile) => profile?.id && profile?.name && profile?.apiKey)
+            .map((profile) => ({ id: profile.id, name: profile.name, apiKey: profile.apiKey }))
+        : [],
+      messages: Array.isArray(parsed.messages) ? parsed.messages.filter((message) => message?.role && message?.content) : [],
+    };
+  } catch {
+    return {
+      open: false,
+      settingsOpen: false,
+      activeProfileId: null,
+      profiles: [],
+      messages: [],
+    };
   }
 }
 
@@ -627,4 +725,238 @@ function moveTodoBefore(sourceId, targetId) {
 
 function wait(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function openAiPanel() {
+  aiState.open = true;
+  renderAiPanel();
+}
+
+function closeAiPanel() {
+  aiState.open = false;
+  aiState.settingsOpen = false;
+  renderAiPanel();
+}
+
+function openAiSettingsPanel() {
+  aiState.settingsOpen = true;
+  aiState.open = true;
+  renderAiPanel();
+}
+
+function closeAiSettingsPanel() {
+  aiState.settingsOpen = false;
+  renderAiPanel();
+}
+
+function handleAiProfileSubmit(event) {
+  event.preventDefault();
+  const name = aiProfileNameInput.value.trim();
+  const apiKey = aiProfileKeyInput.value.trim();
+  if (!name || !apiKey) {
+    pushAiMessage("system", "API設定には名前と APIキーの両方が必要です。");
+    return;
+  }
+
+  if (!apiKey.startsWith("pk_")) {
+    pushAiMessage("system", "このTODOアプリはブラウザで動くので、Noesia の `pk_` キーを入れてください。");
+    return;
+  }
+
+  const profile = {
+    id: createId("ai"),
+    name,
+    apiKey,
+  };
+
+  aiState.profiles.push(profile);
+  aiState.activeProfileId = profile.id;
+  aiProfileNameInput.value = "";
+  aiProfileKeyInput.value = "";
+  persistAiState();
+  renderAiPanel();
+}
+
+function runAiAction(label, prompt) {
+  sendAiMessage(`【${label}】\n${prompt}`);
+}
+
+async function sendAiMessage(message) {
+  const activeProfile = getActiveAiProfile();
+  if (!activeProfile) {
+    pushAiMessage("system", "API設定で APIキーを追加して選んでください。");
+    return;
+  }
+
+  pushAiMessage("user", message);
+  pushAiMessage("system", "AIが考えています…");
+
+  try {
+    const context = aiState.messages
+      .filter((entry) => entry.role === "user" || entry.role === "assistant")
+      .slice(-10)
+      .map((entry) => ({ role: entry.role, content: entry.content }));
+
+    const response = await fetch(`${DEFAULT_NOESIA_BASE_URL}/v1/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": activeProfile.apiKey,
+      },
+      body: JSON.stringify({
+        message: `${buildCurrentPageSummary()}\n\n依頼: ${message}`,
+        context,
+        lang: "ja",
+        max_tokens: 600,
+      }),
+    });
+
+    const data = await response.json();
+    removeLastSystemThinking();
+
+    if (!response.ok) {
+      pushAiMessage("system", formatNoesiaError(response.status, data));
+      return;
+    }
+
+    pushAiMessage("assistant", data.reply ?? "返答がありませんでした。");
+  } catch (error) {
+    removeLastSystemThinking();
+    pushAiMessage("system", "API接続エラー");
+  }
+}
+
+function formatNoesiaError(status, data) {
+  const detail = data?.detail;
+  const error = detail?.error;
+  const code = error?.code ?? "";
+  const requestId = error?.request_id ?? data?.request_id ?? "";
+
+  let message = "API接続エラー";
+  if (code === "insufficient_balance" || status === 402) {
+    message = "token切れ";
+  } else if (code === "origin_not_allowed" || status === 403) {
+    message = "このURLはNoesiaで許可されていません";
+  } else if (code === "rate_limit_exceeded" || status === 429) {
+    message = "アクセスが多すぎます。少し待ってください";
+  } else if (code === "invalid_api_key" || status === 401) {
+    message = "APIキーエラー";
+  } else if (code === "persona_not_found" || status === 404) {
+    message = "人格データが見つかりません";
+  } else if (error?.message) {
+    message = `APIエラー: ${error.message}`;
+  }
+
+  return requestId ? `${message}\nrequest_id: ${requestId}` : message;
+}
+
+function buildCurrentPageSummary() {
+  const page = getCurrentPage();
+  const lines = [
+    `現在のページ名: ${page.title}`,
+    `付箋名: ${page.tabLabel}`,
+    `テーマ: ${page.theme}`,
+    "TODO一覧:",
+  ];
+
+  if (!page.items.length) {
+    lines.push("- 予定なし");
+  } else {
+    page.items.forEach((item, index) => {
+      lines.push(`- ${index + 1}. ${item.text || "無題"} / 完了:${item.completed ? "はい" : "いいえ"} / ピン:${item.pinned ? "はい" : "いいえ"} / スタンプ:${item.stamp || "なし"} / 期限:${item.dueDate || "なし"} / メモ:${item.memo || "なし"}`);
+    });
+  }
+
+  return lines.join("\n");
+}
+
+function pushAiMessage(role, content) {
+  aiState.messages.push({ role, content });
+  persistAiState();
+  aiState.open = true;
+  renderAiPanel();
+}
+
+function removeLastSystemThinking() {
+  const last = aiState.messages.at(-1);
+  if (last?.role === "system" && last.content === "AIが考えています…") {
+    aiState.messages.pop();
+    persistAiState();
+  }
+}
+
+function appendAiMessageElement(role, content) {
+  const node = document.createElement("div");
+  node.className = `ai-message ${role}`;
+  node.textContent = content;
+  aiMessages.appendChild(node);
+}
+
+function renderAiProfileList() {
+  aiProfileList.innerHTML = "";
+
+  if (!aiState.profiles.length) {
+    const empty = document.createElement("div");
+    empty.className = "ai-message system";
+    empty.textContent = "まだ API は登録されていません。";
+    aiProfileList.appendChild(empty);
+    return;
+  }
+
+  aiState.profiles.forEach((profile) => {
+    const card = document.createElement("div");
+    card.className = "ai-profile-card";
+    card.classList.toggle("active", profile.id === aiState.activeProfileId);
+
+    const row = document.createElement("div");
+    row.className = "ai-profile-row";
+
+    const name = document.createElement("div");
+    name.className = "ai-profile-name";
+    name.textContent = profile.name;
+
+    const mask = document.createElement("div");
+    mask.className = "ai-profile-key-mask";
+    mask.textContent = `${profile.apiKey.slice(0, 6)}••••••`;
+
+    row.appendChild(name);
+    row.appendChild(mask);
+
+    const actions = document.createElement("div");
+    actions.className = "ai-profile-actions";
+
+    const useButton = document.createElement("button");
+    useButton.type = "button";
+    useButton.className = "ai-mini-button";
+    useButton.textContent = profile.id === aiState.activeProfileId ? "使用中" : "使う";
+    useButton.disabled = profile.id === aiState.activeProfileId;
+    useButton.addEventListener("click", () => {
+      aiState.activeProfileId = profile.id;
+      persistAiState();
+      renderAiPanel();
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "ai-mini-button";
+    deleteButton.textContent = "削除";
+    deleteButton.addEventListener("click", () => {
+      aiState.profiles = aiState.profiles.filter((entry) => entry.id !== profile.id);
+      if (aiState.activeProfileId === profile.id) {
+        aiState.activeProfileId = aiState.profiles[0]?.id ?? null;
+      }
+      persistAiState();
+      renderAiPanel();
+    });
+
+    actions.appendChild(useButton);
+    actions.appendChild(deleteButton);
+    card.appendChild(row);
+    card.appendChild(actions);
+    aiProfileList.appendChild(card);
+  });
+}
+
+function getActiveAiProfile() {
+  return aiState.profiles.find((profile) => profile.id === aiState.activeProfileId) ?? null;
 }
