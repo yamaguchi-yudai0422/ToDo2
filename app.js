@@ -348,7 +348,7 @@ function renderAiPanel() {
   renderAiProfileList();
 
   if (!aiState.messages.length) {
-    appendAiMessageElement("system", "まず API設定 で名前と `pk_` APIキーを追加してください。そのあと上の固定ボタンを押すと、今見ているページを Noesia が人格らしく見てコメントします。");
+    appendAiMessageElement("system", "まず API設定 で名前と `sk_` APIキーを追加してください。そのあと上の固定ボタンを押すと、今見ているページを Noesia が人格らしく見てコメントします。");
     return;
   }
 
@@ -758,8 +758,8 @@ function handleAiProfileSubmit(event) {
     return;
   }
 
-  if (!apiKey.startsWith("pk_")) {
-    pushAiMessage("system", "このTODOアプリはブラウザで動くので、Noesia の `pk_` キーを入れてください。");
+  if (!apiKey.startsWith("sk_")) {
+    pushAiMessage("system", "Noesia の `sk_` キーを入れてください。");
     return;
   }
 
