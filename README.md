@@ -1,4 +1,4 @@
-# Todo Pages
+﻿# Todo Pages
 
 依存なしでそのまま GitHub に置ける、複数ページ対応の手帳風 TODO アプリです。
 
@@ -28,4 +28,5 @@
 
 ## 公開
 
+GitHub Pages: https://yamaguchi-yudai0422.github.io/ToDo2/
 `index.html`、`styles.css`、`app.js` をそのまま GitHub Pages に置けば動きます。

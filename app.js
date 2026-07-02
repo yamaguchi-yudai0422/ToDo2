@@ -9,11 +9,11 @@ const STAMP_LABELS = {
   buy: "買う",
 };
 const AI_ACTION_PROMPTS = {
-  impression: "今開いているTODOページ全体を見て、あなたらしい言い方で短く感想をください。褒めるだけではなく、印象に残る点があれば一言で触れてください。",
-  concern: "今開いているTODOページを見て、あなたが最初に気になる点を1つか2つだけ挙げてください。人格らしい目線や言い方をはっきり出してください。",
-  delay: "今開いているTODOページの中で、後回しになりそうなことをあなたの視点で指摘してください。理由も短く添えてください。",
-  owner: "今開いているTODOページの持ち主に向けて、あなたらしい言葉でひとこと話しかけてください。励ましでもツッコミでも構いません。",
-  missing: "今開いているTODOページを見て、抜けていそうな予定や見落としをあなたの視点で短く指摘してください。"
+  impression: "これはTODOアプリの1ページです。表示されている内容は文章ではなく、持ち主が並べた予定や用事の一覧です。その前提で全体を見て、あなたらしい言い方で短く感想をください。褒めるだけではなく、印象に残る点があれば一言で触れてください。",
+  concern: "これはTODOアプリの1ページです。並んでいるのは持ち主の予定や用事です。その前提で、あなたが最初に気になるタスクや並び方を1つか2つだけ挙げてください。人格らしい目線や言い方をはっきり出してください。",
+  delay: "これはTODOアプリの1ページです。タスク一覧を見て、後回しになりそうな予定をあなたの視点で指摘してください。理由も短く添えてください。",
+  owner: "これはTODOアプリの1ページです。タスクを書いた持ち主に向けて、あなたらしい言葉でひとこと話しかけてください。励ましでもツッコミでも構いません。",
+  missing: "これはTODOアプリの1ページです。予定や用事の一覧として見たときに、抜けていそうなことや見落としをあなたの視点で短く指摘してください。"
 };
 
 const defaultState = {
@@ -804,7 +804,7 @@ async function sendAiMessage(message) {
         "X-Api-Key": activeProfile.apiKey,
       },
       body: JSON.stringify({
-        message: `${buildCurrentPageSummary()}\n\n依頼: ${message}`,
+        message: `${buildCurrentPageSummary()}\n\n回答ルール:\n- これはTODOアプリの1ページとして扱う\n- 並んでいる内容は予定、用事、メモ付きタスクの一覧として読む\n- 画面デザインの感想ではなく、タスク内容や並び方に対して反応する\n- 回答は短めにする\n\n依頼: ${message}`,
         context,
         lang: "ja",
         max_tokens: 600,
@@ -853,10 +853,11 @@ function formatNoesiaError(status, data) {
 function buildCurrentPageSummary() {
   const page = getCurrentPage();
   const lines = [
+    "これは複数ページ式のTODOアプリの現在ページです。",
     `現在のページ名: ${page.title}`,
     `付箋名: ${page.tabLabel}`,
     `テーマ: ${page.theme}`,
-    "TODO一覧:",
+    "このページにあるタスク一覧:",
   ];
 
   if (!page.items.length) {
